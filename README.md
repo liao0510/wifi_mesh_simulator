@@ -1,0 +1,2 @@
+# wifi_mesh_simulator
+用來模擬AP放置後WiFi相關數值的變化模擬
