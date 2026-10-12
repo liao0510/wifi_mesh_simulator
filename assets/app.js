@@ -14,8 +14,31 @@ function buildMask(){let w=W(),h=H(),n=w*h,wall=state.map.wall_map,outer=new Uin
 function loadMap(raw,name='匯入地圖'){state.seq++;state.map=validate(raw);state.gatewayId=null;state.aps=[];state.clients=[];state.manual=new Int8Array(W()*H());state.selected=null;state.probe=null;nextAP=1;nextClient=1;state.view={scale:1,ox:0,oy:0};buildMask();$('mapName').textContent=name;$('mapMeta').textContent=`${W()} × ${H()} · ${(W()*.1).toFixed(1)} × ${(H()*.1).toFixed(1)} m`;calculate()}
 function gatewayIndex(){return state.aps.findIndex(a=>a.id===state.gatewayId)}
 function validPlacement(x,y){return inside(x,y)&&state.map.wall_map[y][x]===0&&!state.map.forbidden[y][x]&&state.indoor[idx(x,y)]===1}
-// DDA traversal: each visited material cell contributes exactly once. At exact corner crossings, diagonal cell is chosen.
-function lossAlong(ax,ay,bx,by){const dx=bx-ax,dy=by-ay,steps=Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))*3),w=W(),h=H();let last=-1,sum=0;for(let s=0;s<=steps;s++){let t=steps?s/steps:0,x=clamp(Math.floor(ax+dx*t),0,w-1),y=clamp(Math.floor(ay+dy*t),0,h-1),i=y*w+x;if(i===last)continue;last=i;let m=state.map.wall_map[y][x];if(m)sum+=materialDefs[m].loss}return sum}
+// Exact 2D grid traversal between CELL CENTERS. Loss coefficients are dB per 0.1 m
+// of path inside a material cell. Corner touches contribute zero path length.
+function lossAlong(ax,ay,bx,by){
+ const dx=bx-ax,dy=by-ay,span=Math.hypot(dx,dy);
+ if(span===0)return 0;
+ let ix=Math.floor(ax),iy=Math.floor(ay),t=0,loss=0;
+ const sx=Math.sign(dx),sy=Math.sign(dy);
+ const txStep=dx===0?Infinity:1/Math.abs(dx),tyStep=dy===0?Infinity:1/Math.abs(dy);
+ let tx=dx===0?Infinity:(sx>0?(ix+1-ax):(ax-ix))/Math.abs(dx);
+ let ty=dy===0?Infinity:(sy>0?(iy+1-ay):(ay-iy))/Math.abs(dy);
+ const maxIterations=W()+H()+4;
+ for(let step=0;step<maxIterations&&t<1-1e-12;step++){
+  const next=Math.min(1,tx,ty);
+  if(ix>=0&&ix<W()&&iy>=0&&iy<H()&&next>t){
+   const mat=state.map.wall_map[iy][ix];
+   loss+=materialDefs[mat].loss*(next-t)*span;
+  }
+  if(next>=1)break;
+  // Moving across both boundaries at a corner is intentional.
+  if(tx<=next+1e-12){ix+=sx;tx+=txStep}
+  if(ty<=next+1e-12){iy+=sy;ty+=tyStep}
+  t=next;
+ }
+ return loss;
+}
 function rssiAt(ap,x,y,p,backhaul=false){let dx=(ap.x-x)*.1,dy=(ap.y-y)*.1,d=Math.max(.1,Math.hypot(dx,dy)),f=backhaul?p.backfreq:p.freq;let fspl=32.44+20*Math.log10(f)+20*Math.log10(d/1000);return (ap.power??p.power)-fspl-lossAlong(ap.x+.5,ap.y+.5,x+.5,y+.5)}
 function linkGraph(p){
  const n=state.aps.length,N=noise(p),edges=[],adj=Array.from({length:n},()=>[]);
