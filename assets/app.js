@@ -109,18 +109,24 @@ function updateUI(){
  $('apCount').textContent=state.aps.length+' 顆';$('clientCount').textContent=state.clients.length+' 個';
  $('apList').innerHTML=state.aps.map((a,i)=>{
   const m=r.apInfo[i], isGateway=i===r.graph.gateway, parent=m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':m.candidateParent>=0?state.aps[m.candidateParent].id+'（未達標候選）':'—');
+  const linkSinr=m.uplink?Math.min(m.uplink.txSinr,m.uplink.rxSinr):null;
   return `<div class="node" data-ap="${i}"><div class="row"><strong style="color:${apColors[i%apColors.length]}">${a.id}${isGateway?' · Gateway':''}</strong><button data-delete-ap="${i}">刪除</button></div>
   <div>座標 (${a.x}, ${a.y}) · ${fmt(a.power,' dBm')}</div>
   <div>Mesh：${m.reachable?'✓ Gateway 可達':'✕ Gateway 不可達'} · 上游：${parent}</div>
-  <div>Backhaul 瓶頸 SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'} · 候選 Link SINR：${fmt(m.candidateSinr,' dB')} · 最近 AP SINR：${fmt(m.nearestSinr,' dB')}</div>
-  <div>Serving Clients：${m.servingClients.length}（Connected ${m.connectedClients.length}）· Serving SINR Avg / Min：${fmt(m.servingAvgSinr)} / ${fmt(m.servingMinSinr)} dB</div>
-  <div>服務區平均 SINR：${fmt(m.avgSinr,' dB')} · SINR 達標格：${m.coveredCells}</div></div>`
+  <div>Backhaul SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'} · Link SINR：${fmt(linkSinr,' dB')}</div>
+  <div>最近 AP SINR：${fmt(m.nearestSinr,' dB')}</div>
+  <div>Serving Clients：${m.servingClients.length}（Connected ${m.connectedClients.length}）</div>
+  <div>Serving SINR Avg / Min：${fmt(m.servingAvgSinr)} / ${fmt(m.servingMinSinr)} dB</div>
+  <div>服務區平均 SINR：${fmt(m.avgSinr,' dB')}</div></div>`
  }).join('')||'<p class="hint">尚未放置 AP</p>';
  $('clientList').innerHTML=state.clients.map((c,i)=>{
   const v=r.clients[i];return `<div class="node" data-client="${i}"><div class="row"><strong>${c.id}</strong><button data-delete-client="${i}">刪除</button></div>
   <div>(${c.x}, ${c.y}) · ${v.connected?'🟢 Connected':'🔴 Disconnected'}</div>
-  <div>Nearest：${v.nearest>=0?state.aps[v.nearest].id:'—'} · Serving：${v.serving>=0?state.aps[v.serving].id:'—'}</div>
-  <div>Serving SINR ${fmt(v.sinr,' dB')} · Backhaul ${v.serving===r.graph.gateway?'Gateway':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')} · E2E ${fmt(v.e2eSinr,' dB')}</div><div>${v.reason}</div></div>`
+  <div>Nearest：${v.nearest>=0?state.aps[v.nearest].id:'—'}</div>
+  <div>Serving：${v.serving>=0?state.aps[v.serving].id:'—'}</div>
+  <div>Serving SINR：${fmt(v.sinr,' dB')}</div>
+  <div>Backhaul：${v.serving===r.graph.gateway?'Gateway（直連）':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')}</div>
+  <div>${v.reason}</div></div>`
  }).join('')||'<p class="hint">尚未放置 Client</p>';
  showDetails();
 }
@@ -130,14 +136,15 @@ function showDetails(){
   const a=state.aps[s.i],m=r.apInfo[s.i],isGateway=s.i===r.graph.gateway;
   const peerRows=m.peers.map(v=>`<tr><td>${state.aps[v.peer].id}</td><td>${fmt(v.txSinr,' dB')}</td><td>${fmt(v.rxSinr,' dB')}</td><td>${v.ok?'✓':'✕'}</td></tr>`).join('');
   const serving=m.servingClients.map(j=>`${state.clients[j].id} (${fmt(r.clients[j].sinr,' dB')}, ${r.clients[j].connected?'Connected':'Disconnected'})`).join('<br>')||'無';
-  txt=`<b>${a.id}${isGateway?' (Gateway)':''}</b><br>位置：(${a.x}, ${a.y}) · (${fmt((a.x+.5)*.1)}, ${fmt((a.y+.5)*.1)}) m<br>發射功率：${fmt(a.power,' dBm')}<br><button data-set-gateway="${s.i}" ${isGateway?'disabled':''}>設為 Gateway</button><br>Gateway 可達：${m.reachable}<br>上游 AP：${m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':'—')}<br>上游 Link SINR：${m.uplink?fmt(Math.min(m.uplink.txSinr,m.uplink.rxSinr),' dB'):'—'}<br>Backhaul 瓶頸 SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'}<br>最佳候選鄰居（即使未達標）：${m.candidateParent>=0?state.aps[m.candidateParent].id:'—'}<br>候選 Link SINR：${fmt(m.candidateSinr,' dB')}<br>最近 AP（距離）：${m.nearestParent>=0?state.aps[m.nearestParent].id:'—'}<br>最近 AP 雙向 SINR：${fmt(m.nearestSinr,' dB')}<br>Serving SINR（Clients 平均／最低）：${fmt(m.servingAvgSinr,' dB')} / ${fmt(m.servingMinSinr,' dB')}<br>Access 服務區平均 SINR：${fmt(m.avgSinr,' dB')}<br>Access 服務區最高 SINR：${fmt(m.peakSinr,' dB')}<br>服務區格數：${m.assignedCells} · SINR 達標格：${m.coveredCells}<br>Serving Clients：${m.servingClients.length} · 已連線：${m.connectedClients.length}<br><b>服務的 Client</b><br>${serving}<br><b>Backhaul 鄰居（本端→對端 / 對端→本端）</b><table class="mini-table"><thead><tr><th>AP</th><th>TX SINR</th><th>RX SINR</th><th>Link</th></tr></thead><tbody>${peerRows||'<tr><td colspan="4">無其他 AP</td></tr>'}</tbody></table>`;
+  const linkSinr=m.uplink?Math.min(m.uplink.txSinr,m.uplink.rxSinr):null;
+  txt=`<b>${a.id}${isGateway?' (Gateway)':''}</b><br>座標：(${a.x}, ${a.y}) · (${fmt((a.x+.5)*.1)}, ${fmt((a.y+.5)*.1)}) m<br>發射功率：${fmt(a.power,' dBm')}<br><button data-set-gateway="${s.i}" ${isGateway?'disabled':''}>設為 Gateway</button><br>Mesh：${m.reachable?'✓ Gateway 可達':'✕ Gateway 不可達'}<br>上游：${m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':m.candidateParent>=0?state.aps[m.candidateParent].id+'（未達標候選）':'—')}<br>Backhaul SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'}<br>Link SINR：${fmt(linkSinr,' dB')}<br>最近 AP：${m.nearestParent>=0?state.aps[m.nearestParent].id:'—'}<br>最近 AP SINR：${fmt(m.nearestSinr,' dB')}<br>Serving Clients：${m.servingClients.length}（Connected ${m.connectedClients.length}）<br>Serving SINR Avg / Min：${fmt(m.servingAvgSinr)} / ${fmt(m.servingMinSinr)} dB<br>服務區平均 SINR：${fmt(m.avgSinr,' dB')}<br>服務區最高 SINR：${fmt(m.peakSinr,' dB')}<br><b>Serving Clients 明細</b><br>${serving}<br><b>Backhaul Mesh 鄰居（本端→對端 / 對端→本端）</b><table class="mini-table"><thead><tr><th>AP</th><th>TX SINR</th><th>RX SINR</th><th>可連</th></tr></thead><tbody>${peerRows||'<tr><td colspan="4">無其他 AP</td></tr>'}</tbody></table>`;
  }else if(s?.type==='client'&&state.clients[s.i]){
   const c=state.clients[s.i],v=r.clients[s.i];
   const rows=v.candidates.map(q=>`<tr><td>${state.aps[q.ap].id}${q.ap===v.serving?' ★':''}</td><td>${fmt(q.rssi)}</td><td>${fmt(q.sinr)}</td><td>${q.mesh?'✓':'✕'}</td></tr>`).join('');
-  txt=`<b>${c.id}</b><br>位置：(${c.x}, ${c.y})<br>最近 AP：${v.nearest>=0?state.aps[v.nearest].id:'—'}<br>Serving AP（最高 SINR）：${v.serving>=0?state.aps[v.serving].id:'—'}<br>RSSI：${fmt(v.rssi,' dBm')}<br>Serving SINR：${fmt(v.sinr,' dB')}<br>Backhaul 瓶頸 SINR：${v.serving===r.graph.gateway?'Gateway':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')}<br>End-to-End 瓶頸 SINR：${fmt(v.e2eSinr,' dB')}<br>SINR 門檻：${fmt(p.sinr,' dB')}<br>Connected：${v.connected}<br>原因：${v.reason}<br><b>候選 AP 訊號比較</b><table class="mini-table"><thead><tr><th>AP</th><th>RSSI</th><th>SINR</th><th>Mesh</th></tr></thead><tbody>${rows||'<tr><td colspan="4">無 AP</td></tr>'}</tbody></table>`;
+  txt=`<b>${c.id}</b><br>位置：(${c.x}, ${c.y})<br>最近 AP：${v.nearest>=0?state.aps[v.nearest].id:'—'}<br>Serving AP（最高 SINR）：${v.serving>=0?state.aps[v.serving].id:'—'}<br>RSSI：${fmt(v.rssi,' dBm')}<br>Serving SINR：${fmt(v.sinr,' dB')}<br>Backhaul SINR：${v.serving===r.graph.gateway?'Gateway（直連）':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')}<br>End-to-End 瓶頸 SINR：${fmt(v.e2eSinr,' dB')}<br>SINR 門檻：${fmt(p.sinr,' dB')}<br>Connected：${v.connected}<br>原因：${v.reason}<br><b>候選 AP 訊號比較</b><table class="mini-table"><thead><tr><th>AP</th><th>RSSI</th><th>SINR</th><th>Mesh</th></tr></thead><tbody>${rows||'<tr><td colspan="4">無 AP</td></tr>'}</tbody></table>`;
  }else if(state.probe){
   const {x,y}=state.probe,i=idx(x,y),a=r.bestIndex[i],indoor=!!state.indoor[i];
-  txt=`<b>地圖位置 (${x}, ${y})</b><br>座標：(${fmt((x+.5)*.1)}, ${fmt((y+.5)*.1)}) m<br>材質：${materialDefs[state.map.wall_map[y][x]].name}<br>有效室內：${indoor}<br>最佳 AP：${a>=0?state.aps[a].id:'—'}<br>RSSI：${fmt(r.best[i],' dBm')}<br>SINR：${fmt(r.sbest[i],' dB')}<br>SINR 達標：${indoor&&r.sbest[i]>=p.sinr}<br>Noise：${fmt(noise(p),' dBm')}`;
+  txt=`<b>地圖位置 (${x}, ${y})</b><br>座標：(${fmt((x+.5)*.1)}, ${fmt((y+.5)*.1)}) m<br>材質：${materialDefs[state.map.wall_map[y][x]].name}<br>有效室內：${indoor}<br>最佳 AP：${a>=0?state.aps[a].id:'—'}<br>RSSI：${fmt(r.best[i],' dBm')}<br>SINR：${fmt(r.sbest[i],' dB')}<br>Noise：${fmt(noise(p),' dBm')}`;
  }
  $('details').innerHTML=txt;
 }
@@ -148,11 +155,12 @@ const off=document.createElement('canvas'),offctx=off.getContext('2d');function 
   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
   ctx.strokeStyle=style;ctx.lineWidth=2.4;ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);
  };
- // Only selected parent links are drawn; no full-mesh white edge clutter.
- for(let i=0;i<state.aps.length;i++){
-  const parent=r.graph.parent[i];if(parent<0||!r.graph.reachable[i])continue;
-  const a=state.aps[i],b=state.aps[parent];
-  line((a.x+.5)*cw,(a.y+.5)*ch,(b.x+.5)*cw,(b.y+.5)*ch);
+ // Connectivity Graph: show every pair of APs with qualified bidirectional SINR.
+ // Routing (parent / gateway / backhaul SINR) is unchanged and calculated separately.
+ for(const edge of r.graph.edges){
+  if(!edge.ok)continue;
+  const a=state.aps[edge.i],b=state.aps[edge.j];
+  line((a.x+.5)*cw,(a.y+.5)*ch,(b.x+.5)*cw,(b.y+.5)*ch,'#f0f9ff');
  }
  // Each connected Client has one white line to its single highest-SINR Serving AP.
  for(let i=0;i<state.clients.length;i++){
