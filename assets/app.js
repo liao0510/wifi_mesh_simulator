@@ -17,7 +17,50 @@ function validPlacement(x,y){return inside(x,y)&&state.map.wall_map[y][x]===0&&!
 // DDA traversal: each visited material cell contributes exactly once. At exact corner crossings, diagonal cell is chosen.
 function lossAlong(ax,ay,bx,by){const dx=bx-ax,dy=by-ay,steps=Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))*3),w=W(),h=H();let last=-1,sum=0;for(let s=0;s<=steps;s++){let t=steps?s/steps:0,x=clamp(Math.floor(ax+dx*t),0,w-1),y=clamp(Math.floor(ay+dy*t),0,h-1),i=y*w+x;if(i===last)continue;last=i;let m=state.map.wall_map[y][x];if(m)sum+=materialDefs[m].loss}return sum}
 function rssiAt(ap,x,y,p,backhaul=false){let dx=(ap.x-x)*.1,dy=(ap.y-y)*.1,d=Math.max(.1,Math.hypot(dx,dy)),f=backhaul?p.backfreq:p.freq;let fspl=32.44+20*Math.log10(f)+20*Math.log10(d/1000);return (ap.power??p.power)-fspl-lossAlong(ap.x+.5,ap.y+.5,x+.5,y+.5)}
-function linkGraph(p){let n=state.aps.length,edges=[],adj=Array.from({length:n},()=>[]),N=noise(p);for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let a=state.aps[i],b=state.aps[j],ab=rssiAt(a,b.x,b.y,p,true),ba=rssiAt(b,a.x,a.y,p,true),ok=ab-N>=p.sinr&&ba-N>=p.sinr;edges.push({i,j,ab,ba,ok});if(ok){adj[i].push(j);adj[j].push(i)}}let reachable=new Array(n).fill(false),parent=new Array(n).fill(-1),gateway=gatewayIndex();if(gateway>=0){reachable[gateway]=true;let q=[gateway];for(let k=0;k<q.length;k++)for(let v of adj[q[k]])if(!reachable[v]){reachable[v]=true;parent[v]=q[k];q.push(v)}}return {edges,reachable,parent,gateway}}
+function linkGraph(p){
+ const n=state.aps.length,N=noise(p),edges=[],adj=Array.from({length:n},()=>[]);
+ for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+  const ab=rssiAt(state.aps[i],state.aps[j].x,state.aps[j].y,p,true);
+  const ba=rssiAt(state.aps[j],state.aps[i].x,state.aps[i].y,p,true);
+  const linkSinr=Math.min(ab-N,ba-N),ok=linkSinr>=p.sinr;
+  edges.push({i,j,ab,ba,linkSinr,ok});
+  if(ok){adj[i].push({v:j,quality:linkSinr});adj[j].push({v:i,quality:linkSinr})}
+ }
+ // Maximum bottleneck SINR path from Gateway (widest-path routing).
+ const gateway=gatewayIndex(),backhaulSinr=Array(n).fill(-Infinity),parent=Array(n).fill(-1),done=Array(n).fill(false);
+ if(gateway>=0){backhaulSinr[gateway]=Infinity;
+  for(let count=0;count<n;count++){
+   let u=-1;for(let i=0;i<n;i++)if(!done[i]&&(u<0||backhaulSinr[i]>backhaulSinr[u]))u=i;
+   if(u<0||backhaulSinr[u]===-Infinity)break;
+   done[u]=true;
+   for(const {v,quality} of adj[u]){
+    const candidate=Math.min(backhaulSinr[u],quality);
+    if(candidate>backhaulSinr[v]){backhaulSinr[v]=candidate;parent[v]=u}
+   }
+  }
+ }
+ const reachable=backhaulSinr.map(v=>v!==-Infinity);
+ // Diagnostic only: even a disconnected AP shows its strongest potential neighbor's SINR.
+ const candidateParent=Array(n).fill(-1),candidateSinr=Array(n).fill(-Infinity);
+ const nearestParent=Array(n).fill(-1),nearestSinr=Array(n).fill(-Infinity);
+ for(let i=0;i<n;i++){
+  let distance=Infinity;
+  for(let j=0;j<n;j++)if(i!==j){
+   const a=state.aps[i],b=state.aps[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+   if(d<distance){distance=d;nearestParent[i]=j}
+  }
+ }
+ for(const edge of edges){
+  for(const [i,j] of [[edge.i,edge.j],[edge.j,edge.i]])if(edge.linkSinr>candidateSinr[i]){
+   candidateSinr[i]=edge.linkSinr;candidateParent[i]=j;
+  }
+ }
+ for(let i=0;i<n;i++)if(nearestParent[i]>=0){
+  const e=edges.find(e=>(e.i===i&&e.j===nearestParent[i])||(e.j===i&&e.i===nearestParent[i]));
+  if(e)nearestSinr[i]=e.linkSinr;
+ }
+ return {edges,reachable,parent,gateway,backhaulSinr,candidateParent,candidateSinr,nearestParent,nearestSinr};
+}
 // Association is strictly SINR-driven. RSSI threshold is used only for area coverage statistics.
 function evaluateClient(c,p,graph){
  let nearest=-1,nearDist=Infinity,serving=-1,best=-Infinity,signal=-Infinity,N=noise(p);
@@ -31,7 +74,9 @@ function evaluateClient(c,p,graph){
  });
  const connected=serving>=0&&best>=p.sinr&&graph.reachable[serving];
  const reason=serving<0?'沒有 AP':best<p.sinr?'SINR 未達門檻':!graph.reachable[serving]?'Serving AP 無法連回 Gateway':'已連線';
- return {nearest,serving,rssi:signal,sinr:best,connected,reason,candidates};
+ const backhaulSinr=serving<0?null:graph.backhaulSinr[serving];
+ const e2eSinr=serving<0?null:Math.min(best,backhaulSinr);
+ return {nearest,serving,rssi:signal,sinr:best,backhaulSinr,e2eSinr,connected,reason,candidates};
 }
 function apMetrics(p,graph,clients,bestIndex,sbest){
  const n=state.aps.length, N=noise(p);
@@ -42,7 +87,11 @@ function apMetrics(p,graph,clients,bestIndex,sbest){
   for(let k=0;k<bestIndex.length;k++)if(state.indoor[k]&&bestIndex[k]===i){assignedCells++;avgSinr+=sbest[k];peakSinr=Math.max(peakSinr,sbest[k]);if(sbest[k]>=p.sinr)coveredCells++}
   const peers=graph.edges.filter(e=>e.i===i||e.j===i).map(e=>({peer:e.i===i?e.j:e.i,txSinr:(e.i===i?e.ab:e.ba)-N,rxSinr:(e.i===i?e.ba:e.ab)-N,ok:e.ok}));
   const parent=graph.parent[i],uplink=parent<0?null:peers.find(v=>v.peer===parent);
-  return {servingClients,connectedClients,assignedCells,coveredCells,avgSinr:assignedCells?avgSinr/assignedCells:null,peakSinr:Number.isFinite(peakSinr)?peakSinr:null,peers,parent,uplink,reachable:graph.reachable[i]};
+  const servingSinrs=servingClients.map(j=>clients[j].sinr);
+  const servingAvgSinr=servingSinrs.length?servingSinrs.reduce((a,b)=>a+b,0)/servingSinrs.length:null;
+  const servingMinSinr=servingSinrs.length?Math.min(...servingSinrs):null;
+  const candidateParent=graph.candidateParent[i],candidateSinr=graph.candidateSinr[i],nearestParent=graph.nearestParent[i],nearestSinr=graph.nearestSinr[i];
+  return {servingClients,connectedClients,assignedCells,coveredCells,avgSinr:assignedCells?avgSinr/assignedCells:null,peakSinr:Number.isFinite(peakSinr)?peakSinr:null,peers,parent,uplink,reachable:graph.reachable[i],backhaulSinr:graph.backhaulSinr[i],candidateParent,candidateSinr,nearestParent,nearestSinr,servingAvgSinr,servingMinSinr};
  });
 }
 function calculate(){if(!state.map)return;const start=performance.now(),p=params(),n=W()*H(),best=new Float32Array(n),bestIndex=new Int16Array(n),sbest=new Float32Array(n),N=noise(p);best.fill(-Infinity);sbest.fill(-Infinity);bestIndex.fill(-1);for(let a=0;a<state.aps.length;a++){let ap=state.aps[a];for(let y=0;y<H();y++)for(let x=0;x<W();x++){let i=idx(x,y);if(!state.indoor[i])continue;let r=rssiAt(ap,x,y,p);if(r>best[i]){best[i]=r;sbest[i]=r-N;bestIndex[i]=a}}}let graph=linkGraph(p),clients=state.clients.map(c=>evaluateClient(c,p,graph)),valid=0,covered=0,sinrCovered=0,sum=0,sinrSum=0,min=Infinity,max=-Infinity;for(let i=0;i<n;i++){if(!state.indoor[i])continue;valid++;let r=best[i];if(!Number.isFinite(r))continue;sum+=r;sinrSum+=sbest[i];min=Math.min(min,r);max=Math.max(max,r);if(r>=p.rssi)covered++;if(sbest[i]>=p.sinr)sinrCovered++}const apInfo=apMetrics(p,graph,clients,bestIndex,sbest);state.results={best,bestIndex,sbest,graph,clients,apInfo,valid,covered,sinrCovered,avg:state.aps.length&&valid?sum/valid:null,avgSinr:state.aps.length&&valid?sinrSum/valid:null,min:Number.isFinite(min)?min:null,max:Number.isFinite(max)?max:null};$('calcTime').textContent=`${(performance.now()-start).toFixed(0)} ms`;updateUI();render();setStatus('計算完成')}
@@ -59,19 +108,19 @@ function updateUI(){
  $('clientStat').textContent=state.clients.length?fmt(100*r.clients.filter(c=>c.connected).length/state.clients.length,'%'):'—';
  $('apCount').textContent=state.aps.length+' 顆';$('clientCount').textContent=state.clients.length+' 個';
  $('apList').innerHTML=state.aps.map((a,i)=>{
-  const m=r.apInfo[i], isGateway=i===r.graph.gateway, parent=m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':'—');
+  const m=r.apInfo[i], isGateway=i===r.graph.gateway, parent=m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':m.candidateParent>=0?state.aps[m.candidateParent].id+'（未達標候選）':'—');
   return `<div class="node" data-ap="${i}"><div class="row"><strong style="color:${apColors[i%apColors.length]}">${a.id}${isGateway?' · Gateway':''}</strong><button data-delete-ap="${i}">刪除</button></div>
   <div>座標 (${a.x}, ${a.y}) · ${fmt(a.power,' dBm')}</div>
   <div>Mesh：${m.reachable?'✓ Gateway 可達':'✕ Gateway 不可達'} · 上游：${parent}</div>
-  <div>Backhaul SINR：${isGateway?'Gateway':m.uplink?fmt(Math.min(m.uplink.txSinr,m.uplink.rxSinr),' dB'):'—'}</div>
-  <div>Serving Clients：${m.servingClients.length}（Connected ${m.connectedClients.length}）</div>
+  <div>Backhaul 瓶頸 SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'} · 候選 Link SINR：${fmt(m.candidateSinr,' dB')} · 最近 AP SINR：${fmt(m.nearestSinr,' dB')}</div>
+  <div>Serving Clients：${m.servingClients.length}（Connected ${m.connectedClients.length}）· Serving SINR Avg / Min：${fmt(m.servingAvgSinr)} / ${fmt(m.servingMinSinr)} dB</div>
   <div>服務區平均 SINR：${fmt(m.avgSinr,' dB')} · SINR 達標格：${m.coveredCells}</div></div>`
  }).join('')||'<p class="hint">尚未放置 AP</p>';
  $('clientList').innerHTML=state.clients.map((c,i)=>{
   const v=r.clients[i];return `<div class="node" data-client="${i}"><div class="row"><strong>${c.id}</strong><button data-delete-client="${i}">刪除</button></div>
   <div>(${c.x}, ${c.y}) · ${v.connected?'🟢 Connected':'🔴 Disconnected'}</div>
   <div>Nearest：${v.nearest>=0?state.aps[v.nearest].id:'—'} · Serving：${v.serving>=0?state.aps[v.serving].id:'—'}</div>
-  <div>RSSI ${fmt(v.rssi,' dBm')} · SINR ${fmt(v.sinr,' dB')}</div><div>${v.reason}</div></div>`
+  <div>Serving SINR ${fmt(v.sinr,' dB')} · Backhaul ${v.serving===r.graph.gateway?'Gateway':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')} · E2E ${fmt(v.e2eSinr,' dB')}</div><div>${v.reason}</div></div>`
  }).join('')||'<p class="hint">尚未放置 Client</p>';
  showDetails();
 }
@@ -81,11 +130,11 @@ function showDetails(){
   const a=state.aps[s.i],m=r.apInfo[s.i],isGateway=s.i===r.graph.gateway;
   const peerRows=m.peers.map(v=>`<tr><td>${state.aps[v.peer].id}</td><td>${fmt(v.txSinr,' dB')}</td><td>${fmt(v.rxSinr,' dB')}</td><td>${v.ok?'✓':'✕'}</td></tr>`).join('');
   const serving=m.servingClients.map(j=>`${state.clients[j].id} (${fmt(r.clients[j].sinr,' dB')}, ${r.clients[j].connected?'Connected':'Disconnected'})`).join('<br>')||'無';
-  txt=`<b>${a.id}${isGateway?' (Gateway)':''}</b><br>位置：(${a.x}, ${a.y}) · (${fmt((a.x+.5)*.1)}, ${fmt((a.y+.5)*.1)}) m<br>發射功率：${fmt(a.power,' dBm')}<br><button data-set-gateway="${s.i}" ${isGateway?'disabled':''}>設為 Gateway</button><br>Gateway 可達：${m.reachable}<br>上游 AP：${m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':'—')}<br>Backhaul 上游 SINR（雙向較低值）：${m.uplink?fmt(Math.min(m.uplink.txSinr,m.uplink.rxSinr),' dB'):'—'}<br>Access 服務區平均 SINR：${fmt(m.avgSinr,' dB')}<br>Access 服務區最高 SINR：${fmt(m.peakSinr,' dB')}<br>服務區格數：${m.assignedCells} · SINR 達標格：${m.coveredCells}<br>Serving Clients：${m.servingClients.length} · 已連線：${m.connectedClients.length}<br><b>服務的 Client</b><br>${serving}<br><b>Backhaul 鄰居（本端→對端 / 對端→本端）</b><table class="mini-table"><thead><tr><th>AP</th><th>TX SINR</th><th>RX SINR</th><th>Link</th></tr></thead><tbody>${peerRows||'<tr><td colspan="4">無其他 AP</td></tr>'}</tbody></table>`;
+  txt=`<b>${a.id}${isGateway?' (Gateway)':''}</b><br>位置：(${a.x}, ${a.y}) · (${fmt((a.x+.5)*.1)}, ${fmt((a.y+.5)*.1)}) m<br>發射功率：${fmt(a.power,' dBm')}<br><button data-set-gateway="${s.i}" ${isGateway?'disabled':''}>設為 Gateway</button><br>Gateway 可達：${m.reachable}<br>上游 AP：${m.parent>=0?state.aps[m.parent].id:(isGateway?'Gateway':'—')}<br>上游 Link SINR：${m.uplink?fmt(Math.min(m.uplink.txSinr,m.uplink.rxSinr),' dB'):'—'}<br>Backhaul 瓶頸 SINR：${isGateway?'Gateway':m.reachable?fmt(m.backhaulSinr,' dB'):'未連通'}<br>最佳候選鄰居（即使未達標）：${m.candidateParent>=0?state.aps[m.candidateParent].id:'—'}<br>候選 Link SINR：${fmt(m.candidateSinr,' dB')}<br>最近 AP（距離）：${m.nearestParent>=0?state.aps[m.nearestParent].id:'—'}<br>最近 AP 雙向 SINR：${fmt(m.nearestSinr,' dB')}<br>Serving SINR（Clients 平均／最低）：${fmt(m.servingAvgSinr,' dB')} / ${fmt(m.servingMinSinr,' dB')}<br>Access 服務區平均 SINR：${fmt(m.avgSinr,' dB')}<br>Access 服務區最高 SINR：${fmt(m.peakSinr,' dB')}<br>服務區格數：${m.assignedCells} · SINR 達標格：${m.coveredCells}<br>Serving Clients：${m.servingClients.length} · 已連線：${m.connectedClients.length}<br><b>服務的 Client</b><br>${serving}<br><b>Backhaul 鄰居（本端→對端 / 對端→本端）</b><table class="mini-table"><thead><tr><th>AP</th><th>TX SINR</th><th>RX SINR</th><th>Link</th></tr></thead><tbody>${peerRows||'<tr><td colspan="4">無其他 AP</td></tr>'}</tbody></table>`;
  }else if(s?.type==='client'&&state.clients[s.i]){
   const c=state.clients[s.i],v=r.clients[s.i];
   const rows=v.candidates.map(q=>`<tr><td>${state.aps[q.ap].id}${q.ap===v.serving?' ★':''}</td><td>${fmt(q.rssi)}</td><td>${fmt(q.sinr)}</td><td>${q.mesh?'✓':'✕'}</td></tr>`).join('');
-  txt=`<b>${c.id}</b><br>位置：(${c.x}, ${c.y})<br>最近 AP：${v.nearest>=0?state.aps[v.nearest].id:'—'}<br>Serving AP（最高 SINR）：${v.serving>=0?state.aps[v.serving].id:'—'}<br>RSSI：${fmt(v.rssi,' dBm')}<br>SINR：${fmt(v.sinr,' dB')}<br>SINR 門檻：${fmt(p.sinr,' dB')}<br>Connected：${v.connected}<br>原因：${v.reason}<br><b>候選 AP 訊號比較</b><table class="mini-table"><thead><tr><th>AP</th><th>RSSI</th><th>SINR</th><th>Mesh</th></tr></thead><tbody>${rows||'<tr><td colspan="4">無 AP</td></tr>'}</tbody></table>`;
+  txt=`<b>${c.id}</b><br>位置：(${c.x}, ${c.y})<br>最近 AP：${v.nearest>=0?state.aps[v.nearest].id:'—'}<br>Serving AP（最高 SINR）：${v.serving>=0?state.aps[v.serving].id:'—'}<br>RSSI：${fmt(v.rssi,' dBm')}<br>Serving SINR：${fmt(v.sinr,' dB')}<br>Backhaul 瓶頸 SINR：${v.serving===r.graph.gateway?'Gateway':v.backhaulSinr===-Infinity?'未連通':fmt(v.backhaulSinr,' dB')}<br>End-to-End 瓶頸 SINR：${fmt(v.e2eSinr,' dB')}<br>SINR 門檻：${fmt(p.sinr,' dB')}<br>Connected：${v.connected}<br>原因：${v.reason}<br><b>候選 AP 訊號比較</b><table class="mini-table"><thead><tr><th>AP</th><th>RSSI</th><th>SINR</th><th>Mesh</th></tr></thead><tbody>${rows||'<tr><td colspan="4">無 AP</td></tr>'}</tbody></table>`;
  }else if(state.probe){
   const {x,y}=state.probe,i=idx(x,y),a=r.bestIndex[i],indoor=!!state.indoor[i];
   txt=`<b>地圖位置 (${x}, ${y})</b><br>座標：(${fmt((x+.5)*.1)}, ${fmt((y+.5)*.1)}) m<br>材質：${materialDefs[state.map.wall_map[y][x]].name}<br>有效室內：${indoor}<br>最佳 AP：${a>=0?state.aps[a].id:'—'}<br>RSSI：${fmt(r.best[i],' dBm')}<br>SINR：${fmt(r.sbest[i],' dB')}<br>SINR 達標：${indoor&&r.sbest[i]>=p.sinr}<br>Noise：${fmt(noise(p),' dBm')}`;
@@ -94,7 +143,25 @@ function showDetails(){
 }
 $('details').addEventListener('click',e=>{const b=e.target.closest('[data-set-gateway]');if(!b)return;const ap=state.aps[Number(b.dataset.setGateway)];if(!ap)return;state.gatewayId=ap.id;calculate();toast(ap.id+' 已設為 Gateway')});
 function color(t){t=clamp(t,0,1);if($('reverse').checked)t=1-t;const stops=[[37,75,156],[64,178,192],[103,201,116],[246,213,69],[236,67,62]],z=t*(stops.length-1),k=Math.min(stops.length-2,Math.floor(z)),a=z-k;return stops[k].map((v,j)=>Math.round(v*(1-a)+stops[k+1][j]*a))}
-const off=document.createElement('canvas'),offctx=off.getContext('2d');function render(){if(!state.map||!state.results)return;let w=W(),h=H(),r=state.results;off.width=w;off.height=h;let image=offctx.createImageData(w,h),strong=number('maxColor',-30),weak=number('minColor',-100);if(strong<=weak)strong=weak+1;for(let y=0;y<h;y++)for(let x=0;x<w;x++){let i=idx(x,y),k=i*4,m=state.map.wall_map[y][x],rgb=[20,34,54];if(state.indoor[i]){if(state.mode==='coverage'){let a=r.bestIndex[i];rgb=a<0?[29,44,64]:hexToRgb(apColors[a%apColors.length]);if(r.best[i]<params().rssi)rgb=rgb.map(v=>Math.round(v*.35))}else if(state.mode==='mesh'){rgb=[30,47,65]}else{let v=state.mode==='sinr'?r.sbest[i]:r.best[i],lo=state.mode==='sinr'?-10:weak,hi=state.mode==='sinr'?40:strong;rgb=Number.isFinite(v)?color((v-lo)/(hi-lo)):[26,42,65]}}if(m&&$('showMaterials').checked){let c=hexToRgb(materialDefs[m].color);rgb=c.map((v,j)=>Math.round(v*.92+rgb[j]*.08))}if(state.map.forbidden[y][x]&&m===0){rgb=rgb.map((v,j)=>Math.round(v*.6+([100,46,77][j])*.4))}image.data[k]=rgb[0];image.data[k+1]=rgb[1];image.data[k+2]=rgb[2];image.data[k+3]=255}offctx.putImageData(image,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();let {scale,ox,oy}=state.view;ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.imageSmoothingEnabled=false;ctx.drawImage(off,0,0,canvas.width,canvas.height);let cw=canvas.width/w,ch=canvas.height/h;if($('showGrid').checked&&w<=150){ctx.strokeStyle='#ffffff22';ctx.lineWidth=.4;ctx.beginPath();for(let x=0;x<=w;x++){ctx.moveTo(x*cw,0);ctx.lineTo(x*cw,canvas.height)}for(let y=0;y<=h;y++){ctx.moveTo(0,y*ch);ctx.lineTo(canvas.width,y*ch)}ctx.stroke()}if($('showLinks').checked||state.mode==='mesh'){for(let e of r.graph.edges){if(!e.ok&&state.mode!=='mesh')continue;let a=state.aps[e.i],b=state.aps[e.j];ctx.beginPath();ctx.moveTo((a.x+.5)*cw,(a.y+.5)*ch);ctx.lineTo((b.x+.5)*cw,(b.y+.5)*ch);ctx.strokeStyle=e.ok?'#f0f9ff':'#fa6479';ctx.lineWidth=e.ok?2.4:1.2;ctx.setLineDash(e.ok?[]:[5,5]);ctx.stroke()}ctx.setLineDash([])}for(let i=0;i<state.aps.length;i++){let a=state.aps[i],x=(a.x+.5)*cw,y=(a.y+.5)*ch;ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fillStyle=apColors[i%apColors.length];ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#081525';ctx.stroke();ctx.fillStyle='#071522';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),x,y);ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.fillText(a.id+(i===0?' ★':''),x,y-18)}for(let i=0;i<state.clients.length;i++){let c=state.clients[i],x=(c.x+.5)*cw,y=(c.y+.5)*ch;ctx.fillStyle=r.clients[i].connected?'#7df3b1':'#ff8390';ctx.fillRect(x-5,y-5,10,10);ctx.strokeStyle='#091421';ctx.lineWidth=2;ctx.strokeRect(x-5,y-5,10,10);ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(c.id,x,y-12)}if(state.probe){let {x,y}=state.probe;ctx.strokeStyle='#fff';ctx.lineWidth=1.6;ctx.strokeRect(x*cw,y*ch,cw,ch)}ctx.restore();$('legendStrong').textContent=state.mode==='sinr'?'40 dB':state.mode==='coverage'?'AP 分區':`${strong} dBm`;$('legendWeak').textContent=state.mode==='sinr'?'-10 dB':state.mode==='coverage'?'':`${weak} dBm`;$('gradient').style.display=['coverage','mesh'].includes(state.mode)?'none':'block';$('gradient').style.background=$('reverse').checked?'linear-gradient(90deg,#3263c9,#42b6a4,#facc15,#ef4444)':'linear-gradient(90deg,#ef4444,#facc15,#42b6a4,#3263c9)'}
+const off=document.createElement('canvas'),offctx=off.getContext('2d');function render(){if(!state.map||!state.results)return;let w=W(),h=H(),r=state.results;off.width=w;off.height=h;let image=offctx.createImageData(w,h),strong=number('maxColor',-30),weak=number('minColor',-100);if(strong<=weak)strong=weak+1;for(let y=0;y<h;y++)for(let x=0;x<w;x++){let i=idx(x,y),k=i*4,m=state.map.wall_map[y][x],rgb=[20,34,54];if(state.indoor[i]){if(state.mode==='coverage'){let a=r.bestIndex[i];rgb=a<0?[29,44,64]:hexToRgb(apColors[a%apColors.length]);if(r.best[i]<params().rssi)rgb=rgb.map(v=>Math.round(v*.35))}else if(state.mode==='mesh'){rgb=[30,47,65]}else{let v=state.mode==='sinr'?r.sbest[i]:r.best[i],lo=state.mode==='sinr'?-10:weak,hi=state.mode==='sinr'?40:strong;rgb=Number.isFinite(v)?color((v-lo)/(hi-lo)):[26,42,65]}}if(m&&$('showMaterials').checked){let c=hexToRgb(materialDefs[m].color);rgb=c.map((v,j)=>Math.round(v*.92+rgb[j]*.08))}if(state.map.forbidden[y][x]&&m===0){rgb=rgb.map((v,j)=>Math.round(v*.6+([100,46,77][j])*.4))}image.data[k]=rgb[0];image.data[k+1]=rgb[1];image.data[k+2]=rgb[2];image.data[k+3]=255}offctx.putImageData(image,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();let {scale,ox,oy}=state.view;ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.imageSmoothingEnabled=false;ctx.drawImage(off,0,0,canvas.width,canvas.height);let cw=canvas.width/w,ch=canvas.height/h;if($('showGrid').checked&&w<=150){ctx.strokeStyle='#ffffff22';ctx.lineWidth=.4;ctx.beginPath();for(let x=0;x<=w;x++){ctx.moveTo(x*cw,0);ctx.lineTo(x*cw,canvas.height)}for(let y=0;y<=h;y++){ctx.moveTo(0,y*ch);ctx.lineTo(canvas.width,y*ch)}ctx.stroke()}if($('showLinks').checked||state.mode==='mesh'){
+ const line=(x1,y1,x2,y2,style='#f0f9ff',dash=[])=>{
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.strokeStyle=style;ctx.lineWidth=2.4;ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);
+ };
+ // Only selected parent links are drawn; no full-mesh white edge clutter.
+ for(let i=0;i<state.aps.length;i++){
+  const parent=r.graph.parent[i];if(parent<0||!r.graph.reachable[i])continue;
+  const a=state.aps[i],b=state.aps[parent];
+  line((a.x+.5)*cw,(a.y+.5)*ch,(b.x+.5)*cw,(b.y+.5)*ch);
+ }
+ // Each connected Client has one white line to its single highest-SINR Serving AP.
+ for(let i=0;i<state.clients.length;i++){
+  const v=r.clients[i];if(!v.connected||v.serving<0)continue;
+  const c=state.clients[i],a=state.aps[v.serving];
+  line((c.x+.5)*cw,(c.y+.5)*ch,(a.x+.5)*cw,(a.y+.5)*ch,'#ffffff',[3,3]);
+ }
+}
+for(let i=0;i<state.aps.length;i++){let a=state.aps[i],x=(a.x+.5)*cw,y=(a.y+.5)*ch;ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fillStyle=apColors[i%apColors.length];ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#081525';ctx.stroke();ctx.fillStyle='#071522';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),x,y);ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.fillText(a.id+(i===r.graph.gateway?' ★':''),x,y-18)}for(let i=0;i<state.clients.length;i++){let c=state.clients[i],x=(c.x+.5)*cw,y=(c.y+.5)*ch;ctx.fillStyle=r.clients[i].connected?'#7df3b1':'#ff8390';ctx.fillRect(x-5,y-5,10,10);ctx.strokeStyle='#091421';ctx.lineWidth=2;ctx.strokeRect(x-5,y-5,10,10);ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.fillText(c.id,x,y-12)}if(state.probe){let {x,y}=state.probe;ctx.strokeStyle='#fff';ctx.lineWidth=1.6;ctx.strokeRect(x*cw,y*ch,cw,ch)}ctx.restore();$('legendStrong').textContent=state.mode==='sinr'?'40 dB':state.mode==='coverage'?'AP 分區':`${strong} dBm`;$('legendWeak').textContent=state.mode==='sinr'?'-10 dB':state.mode==='coverage'?'':`${weak} dBm`;$('gradient').style.display=['coverage','mesh'].includes(state.mode)?'none':'block';$('gradient').style.background=$('reverse').checked?'linear-gradient(90deg,#3263c9,#42b6a4,#facc15,#ef4444)':'linear-gradient(90deg,#ef4444,#facc15,#42b6a4,#3263c9)'}
 function hexToRgb(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16))}
 function point(ev){let rect=canvas.getBoundingClientRect(),u=(ev.clientX-rect.left)*canvas.width/rect.width,v=(ev.clientY-rect.top)*canvas.height/rect.height,{scale,ox,oy}=state.view;return {x:Math.floor((u-ox)/scale/canvas.width*W()),y:Math.floor((v-oy)/scale/canvas.height*H()),u,v}}
 function hit(x,y){for(let i=state.clients.length-1;i>=0;i--)if(Math.hypot(state.clients[i].x-x,state.clients[i].y-y)<=1.3)return {type:'client',i};for(let i=state.aps.length-1;i>=0;i--)if(Math.hypot(state.aps[i].x-x,state.aps[i].y-y)<=1.3)return {type:'ap',i};return null}
