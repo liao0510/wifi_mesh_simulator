@@ -1,0 +1,629 @@
+{
+  "model_prediction": {
+    "ap_positions": [
+      [
+        94,
+        79
+      ],
+      [
+        159,
+        21
+      ],
+      [
+        100,
+        180
+      ],
+      [
+        163,
+        106
+      ],
+      [
+        155,
+        169
+      ]
+    ],
+    "metrics": {
+      "coverage": 0.667437996914679,
+      "mean_satisfaction": 0.8963529411764707,
+      "mesh_connectivity": 1.0,
+      "demand_met_ratio": 0.8,
+      "total_throughput_mbps": 896.3529411764706,
+      "client_throughput_p05_mbps": 45.76764705882353,
+      "satisfaction_fairness": 0.9363937451461934,
+      "associated_client_ratio": 1.0,
+      "mesh_connected": 1.0,
+      "score": 0.8609346582064653
+    },
+    "mesh_edges": [
+      {
+        "ap_a": 0,
+        "ap_b": 1,
+        "snr_a_to_b_db": 18.269103181838375,
+        "snr_b_to_a_db": 18.269103181838375,
+        "snr_db": 18.269103181838375
+      },
+      {
+        "ap_a": 0,
+        "ap_b": 2,
+        "snr_a_to_b_db": 17.04910196113525,
+        "snr_b_to_a_db": 17.04910196113525,
+        "snr_db": 17.04910196113525
+      },
+      {
+        "ap_a": 0,
+        "ap_b": 3,
+        "snr_a_to_b_db": 15.159102571486812,
+        "snr_b_to_a_db": 15.159102571486812,
+        "snr_db": 15.159102571486812
+      },
+      {
+        "ap_a": 1,
+        "ap_b": 3,
+        "snr_a_to_b_db": 16.569098604201656,
+        "snr_b_to_a_db": 16.569098604201656,
+        "snr_db": 16.569098604201656
+      },
+      {
+        "ap_a": 3,
+        "ap_b": 4,
+        "snr_a_to_b_db": 12.879103792189937,
+        "snr_b_to_a_db": 12.879103792189937,
+        "snr_db": 12.879103792189937
+      }
+    ],
+    "in_mesh": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "allocation_results": [
+      {
+        "client": 0,
+        "ap": 4,
+        "sinr_db": 64.90031146528116,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -22.799999237060547,
+        "interference_mw": 1.0191230932623658e-10,
+        "interference_dbm": -99.9177335721437,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -87.70031070234171
+      },
+      {
+        "client": 1,
+        "ap": 0,
+        "sinr_db": 42.02942769236036,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 100.36764705882352,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 100.36764705882352,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -20.93000030517578,
+        "interference_mw": 5.042950779130672e-07,
+        "interference_dbm": -62.97315270678119,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -62.95942799753614
+      },
+      {
+        "client": 2,
+        "ap": 3,
+        "sinr_db": 46.36238946399351,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 996,
+        "ru_capacity_mbps": 420.34313725490193,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 420.34313725490193,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -22.799999237060547,
+        "interference_mw": 1.1967595488377984e-07,
+        "interference_dbm": -69.21993098635218,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -69.16238870105406
+      },
+      {
+        "client": 3,
+        "ap": 2,
+        "sinr_db": 48.22256670427407,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -20.760000228881836,
+        "interference_mw": 1.2480269370340976e-07,
+        "interference_dbm": -69.03776040872332,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -68.98256693315591
+      },
+      {
+        "client": 4,
+        "ap": 1,
+        "sinr_db": 32.798186963579894,
+        "demand_mbps": 100.0,
+        "mcs": 9,
+        "access_capacity_mbps": 336.27450980392155,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 160.58823529411762,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 160.58823529411762,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -48.63999938964844,
+        "interference_mw": 5.584731250255652e-09,
+        "interference_dbm": -82.52997721266235,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -81.43818635322833
+      },
+      {
+        "client": 5,
+        "ap": 0,
+        "sinr_db": 30.75834563772051,
+        "demand_mbps": 100.0,
+        "mcs": 8,
+        "access_capacity_mbps": 302.6470588235294,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 72.26470588235293,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 72.26470588235293,
+        "throughput_mbps": 72.26470588235293,
+        "satisfaction_ratio": 0.7226470588235293,
+        "demand_met": false,
+        "rssi_dbm": -55.540000915527344,
+        "interference_mw": 7.489116284885873e-10,
+        "interference_dbm": -91.25569425990854,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -86.29834655324785
+      },
+      {
+        "client": 6,
+        "ap": 1,
+        "sinr_db": 46.06104283587186,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -23.770000457763672,
+        "interference_mw": 1.0237082801649212e-07,
+        "interference_dbm": -69.89823783950311,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -69.83104329363553
+      },
+      {
+        "client": 7,
+        "ap": 2,
+        "sinr_db": 37.27646295381135,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -48.029998779296875,
+        "interference_mw": 1.3506116268795467e-09,
+        "interference_dbm": -88.69469515930886,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -85.30646173310822
+      },
+      {
+        "client": 8,
+        "ap": 4,
+        "sinr_db": 8.073921642066054,
+        "demand_mbps": 100.0,
+        "mcs": 1,
+        "access_capacity_mbps": 50.441176470588225,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 24.08823529411764,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 24.08823529411764,
+        "throughput_mbps": 24.08823529411764,
+        "satisfaction_ratio": 0.2408823529411764,
+        "demand_met": false,
+        "rssi_dbm": -55.54999923706055,
+        "interference_mw": 4.3252190865763463e-07,
+        "interference_dbm": -63.639918891977,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -63.6239208791266
+      },
+      {
+        "client": 9,
+        "ap": 0,
+        "sinr_db": 47.699811592457166,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 100.36764705882352,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 100.36764705882352,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -20.760000228881836,
+        "interference_mw": 1.4097072676241897e-07,
+        "interference_dbm": -68.50871061283884,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -68.459811821339
+      }
+    ]
+  },
+  "search_improved": {
+    "ap_positions": [
+      [
+        65,
+        75
+      ],
+      [
+        158,
+        33
+      ],
+      [
+        65,
+        175
+      ],
+      [
+        165,
+        115
+      ],
+      [
+        175,
+        165
+      ]
+    ],
+    "metrics": {
+      "coverage": 0.7390827103358253,
+      "mean_satisfaction": 1.0,
+      "mesh_connectivity": 1.0,
+      "demand_met_ratio": 1.0,
+      "total_throughput_mbps": 1000.0,
+      "client_throughput_p05_mbps": 100.0,
+      "satisfaction_fairness": 1.0,
+      "associated_client_ratio": 1.0,
+      "mesh_connected": 1.0,
+      "score": 0.947816542067165
+    },
+    "mesh_edges": [
+      {
+        "ap_a": 0,
+        "ap_b": 2,
+        "snr_a_to_b_db": 29.189101350783687,
+        "snr_b_to_a_db": 29.189101350783687,
+        "snr_db": 29.189101350783687
+      },
+      {
+        "ap_a": 1,
+        "ap_b": 3,
+        "snr_a_to_b_db": 16.78909982490478,
+        "snr_b_to_a_db": 16.78909982490478,
+        "snr_db": 16.78909982490478
+      },
+      {
+        "ap_a": 2,
+        "ap_b": 4,
+        "snr_a_to_b_db": 16.22910226631103,
+        "snr_b_to_a_db": 16.22910226631103,
+        "snr_db": 16.22910226631103
+      },
+      {
+        "ap_a": 3,
+        "ap_b": 4,
+        "snr_a_to_b_db": 14.409102571486812,
+        "snr_b_to_a_db": 14.409102571486812,
+        "snr_db": 14.409102571486812
+      }
+    ],
+    "in_mesh": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "allocation_results": [
+      {
+        "client": 0,
+        "ap": 4,
+        "sinr_db": 38.87979216639832,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -35.29999923706055,
+        "interference_mw": 3.660005179752661e-08,
+        "interference_dbm": -74.36518299978155,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -74.17979140345886
+      },
+      {
+        "client": 1,
+        "ap": 0,
+        "sinr_db": 45.74061509959847,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 100.36764705882352,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 100.36764705882352,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -34.56999969482422,
+        "interference_mw": 7.713550904347806e-09,
+        "interference_dbm": -81.12745650074754,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -80.31061479442269
+      },
+      {
+        "client": 2,
+        "ap": 3,
+        "sinr_db": 28.916248739272334,
+        "demand_mbps": 100.0,
+        "mcs": 8,
+        "access_capacity_mbps": 302.6470588235294,
+        "ru_tones": 996,
+        "ru_capacity_mbps": 302.6470588235294,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 302.6470588235294,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -36.400001525878906,
+        "interference_mw": 2.924225039985793e-07,
+        "interference_dbm": -65.33989208368318,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -65.31625026515124
+      },
+      {
+        "client": 3,
+        "ap": 2,
+        "sinr_db": 28.96318802821733,
+        "demand_mbps": 100.0,
+        "mcs": 8,
+        "access_capacity_mbps": 302.6470588235294,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 144.52941176470586,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 144.52941176470586,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -44.150001525878906,
+        "interference_mw": 4.723315155452724e-08,
+        "interference_dbm": -73.25753075869895,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -73.11318955409624
+      },
+      {
+        "client": 4,
+        "ap": 1,
+        "sinr_db": 54.64587870271558,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -33.310001373291016,
+        "interference_mw": 4.866313430448996e-12,
+        "interference_dbm": -113.12799922382038,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -87.9558800760066
+      },
+      {
+        "client": 5,
+        "ap": 0,
+        "sinr_db": 37.21973663654248,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 100.36764705882352,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 100.36764705882352,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -50.65999984741211,
+        "interference_mw": 3.318504415267254e-11,
+        "interference_dbm": -104.79057600193121,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -87.87973648395459
+      },
+      {
+        "client": 6,
+        "ap": 1,
+        "sinr_db": 50.80446228684599,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -20.760000228881836,
+        "interference_mw": 6.815532177442406e-08,
+        "interference_dbm": -71.6650022747376,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -71.56446251572783
+      },
+      {
+        "client": 7,
+        "ap": 2,
+        "sinr_db": 43.57282723977791,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 200.73529411764704,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 200.73529411764704,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -44.369998931884766,
+        "interference_mw": 9.686024074802263e-12,
+        "interference_dbm": -110.13854455840709,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -87.94282617166267
+      },
+      {
+        "client": 8,
+        "ap": 4,
+        "sinr_db": 36.81666474918205,
+        "demand_mbps": 100.0,
+        "mcs": 10,
+        "access_capacity_mbps": 378.3088235294117,
+        "ru_tones": 484,
+        "ru_capacity_mbps": 180.66176470588232,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 180.66176470588232,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -51.13999938964844,
+        "interference_mw": 4.577285814278025e-12,
+        "interference_dbm": -113.39391968567165,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -87.95666413883049
+      },
+      {
+        "client": 9,
+        "ap": 0,
+        "sinr_db": 47.72434066830638,
+        "demand_mbps": 100.0,
+        "mcs": 11,
+        "access_capacity_mbps": 420.34313725490193,
+        "ru_tones": 242,
+        "ru_capacity_mbps": 100.36764705882352,
+        "time_fraction": 1.0,
+        "scheduled_capacity_mbps": 100.36764705882352,
+        "throughput_mbps": 100.0,
+        "satisfaction_ratio": 1.0,
+        "demand_met": true,
+        "rssi_dbm": -36.68000030517578,
+        "interference_mw": 2.030943376389956e-09,
+        "interference_dbm": -86.92302184750878,
+        "noise_dbm": -87.96910013008056,
+        "noise_interference_dbm": -84.40434097348216
+      }
+    ]
+  },
+  "client_positions": [
+    [
+      149,
+      171
+    ],
+    [
+      89,
+      80
+    ],
+    [
+      157,
+      104
+    ],
+    [
+      102,
+      176
+    ],
+    [
+      173,
+      18
+    ],
+    [
+      26,
+      72
+    ],
+    [
+      158,
+      28
+    ],
+    [
+      97,
+      190
+    ],
+    [
+      184,
+      126
+    ],
+    [
+      96,
+      79
+    ]
+  ],
+  "client_demands_mbps": [
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0,
+    100.0
+  ],
+  "source_sha256": {
+    "C:\\Users\\Luke\\Documents\\ChatGPT\\MSI\\ap_mesh_update\\diagnostics\\layout_gap_lr0003_20261112\\scenario_03.json": "ce0b6cd221ac26c52335f9a4853b5ffe127065b675e0d71be3fa047ac12d3c9f",
+    "C:\\Users\\Luke\\Documents\\ChatGPT\\MSI\\ap_mesh_update\\maps_200_200\\map_0004.json": "74b4ae9951938f59dad48b4aabd1ba6670de40c8b9b4344be2753984cf163d3d"
+  },
+  "radio": {
+    "frequency_mhz": 5210,
+    "bandwidth_mhz": 80,
+    "power_dbm": 20,
+    "noise_figure_db": 7,
+    "noise_dbm": -87.96910013008056,
+    "mesh_snr_threshold_db": 4,
+    "client_sinr_threshold_db": 4,
+    "grid_meters": 0.1,
+    "min_distance_meters": 0.5
+  },
+  "model_path": "C:\\Users\\Luke\\Documents\\ChatGPT\\MSI\\ap_mesh_update\\model\\AP_MESH_OFDMA_20261111_171659_254049_073cfbcb\\best_model.keras"
+}

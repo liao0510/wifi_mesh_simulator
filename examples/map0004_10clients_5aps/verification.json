@@ -1,0 +1,206 @@
+{
+  "model_prediction": {
+    "client_count": 10,
+    "ap_count": 5,
+    "noise_dbm": -87.96910013008056,
+    "serving_aps": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "qualified_mesh_edges": 5,
+    "max_client_rssi_difference_db": 0,
+    "max_client_sinr_difference_db": 0,
+    "max_mesh_snr_difference_db": 0,
+    "max_interference_difference_mw": 0,
+    "browser_coverage": 0.667437996914679,
+    "python_coverage": 0.667437996914679,
+    "coverage_difference": 0,
+    "clients": [
+      {
+        "client": "C0",
+        "ap": "AP4",
+        "rssi_dbm": -22.799999237060547,
+        "sinr_db": 64.90031146528116,
+        "interference_dbm": -99.9177335721437,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C1",
+        "ap": "AP0",
+        "rssi_dbm": -20.93000030517578,
+        "sinr_db": 42.02942769236036,
+        "interference_dbm": -62.97315270678119,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C2",
+        "ap": "AP3",
+        "rssi_dbm": -22.799999237060547,
+        "sinr_db": 46.36238946399351,
+        "interference_dbm": -69.21993098635218,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C3",
+        "ap": "AP2",
+        "rssi_dbm": -20.760000228881836,
+        "sinr_db": 48.22256670427407,
+        "interference_dbm": -69.03776040872332,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C4",
+        "ap": "AP1",
+        "rssi_dbm": -48.63999938964844,
+        "sinr_db": 32.798186963579894,
+        "interference_dbm": -82.52997721266235,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C5",
+        "ap": "AP0",
+        "rssi_dbm": -55.540000915527344,
+        "sinr_db": 30.75834563772051,
+        "interference_dbm": -91.25569425990854,
+        "python_throughput_mbps": 72.26470588235293
+      },
+      {
+        "client": "C6",
+        "ap": "AP1",
+        "rssi_dbm": -23.770000457763672,
+        "sinr_db": 46.06104283587186,
+        "interference_dbm": -69.89823783950311,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C7",
+        "ap": "AP2",
+        "rssi_dbm": -48.029998779296875,
+        "sinr_db": 37.27646295381135,
+        "interference_dbm": -88.69469515930886,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C8",
+        "ap": "AP4",
+        "rssi_dbm": -55.54999923706055,
+        "sinr_db": 8.073921642066054,
+        "interference_dbm": -63.639918891977,
+        "python_throughput_mbps": 24.08823529411764
+      },
+      {
+        "client": "C9",
+        "ap": "AP0",
+        "rssi_dbm": -20.760000228881836,
+        "sinr_db": 47.699811592457166,
+        "interference_dbm": -68.50871061283884,
+        "python_throughput_mbps": 100
+      }
+    ]
+  },
+  "search_improved": {
+    "client_count": 10,
+    "ap_count": 5,
+    "noise_dbm": -87.96910013008056,
+    "serving_aps": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "qualified_mesh_edges": 4,
+    "max_client_rssi_difference_db": 0,
+    "max_client_sinr_difference_db": 0,
+    "max_mesh_snr_difference_db": 0,
+    "max_interference_difference_mw": 0,
+    "browser_coverage": 0.7390827103358253,
+    "python_coverage": 0.7390827103358253,
+    "coverage_difference": 0,
+    "clients": [
+      {
+        "client": "C0",
+        "ap": "AP4",
+        "rssi_dbm": -35.29999923706055,
+        "sinr_db": 38.87979216639832,
+        "interference_dbm": -74.36518299978155,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C1",
+        "ap": "AP0",
+        "rssi_dbm": -34.56999969482422,
+        "sinr_db": 45.74061509959847,
+        "interference_dbm": -81.12745650074754,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C2",
+        "ap": "AP3",
+        "rssi_dbm": -36.400001525878906,
+        "sinr_db": 28.916248739272334,
+        "interference_dbm": -65.33989208368318,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C3",
+        "ap": "AP2",
+        "rssi_dbm": -44.150001525878906,
+        "sinr_db": 28.96318802821733,
+        "interference_dbm": -73.25753075869895,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C4",
+        "ap": "AP1",
+        "rssi_dbm": -33.310001373291016,
+        "sinr_db": 54.64587870271558,
+        "interference_dbm": -113.12799922382038,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C5",
+        "ap": "AP0",
+        "rssi_dbm": -50.65999984741211,
+        "sinr_db": 37.21973663654248,
+        "interference_dbm": -104.79057600193121,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C6",
+        "ap": "AP1",
+        "rssi_dbm": -20.760000228881836,
+        "sinr_db": 50.80446228684599,
+        "interference_dbm": -71.6650022747376,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C7",
+        "ap": "AP2",
+        "rssi_dbm": -44.369998931884766,
+        "sinr_db": 43.57282723977791,
+        "interference_dbm": -110.13854455840709,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C8",
+        "ap": "AP4",
+        "rssi_dbm": -51.13999938964844,
+        "sinr_db": 36.81666474918205,
+        "interference_dbm": -113.39391968567165,
+        "python_throughput_mbps": 100
+      },
+      {
+        "client": "C9",
+        "ap": "AP0",
+        "rssi_dbm": -36.68000030517578,
+        "sinr_db": 47.72434066830638,
+        "interference_dbm": -86.92302184750878,
+        "python_throughput_mbps": 100
+      }
+    ]
+  }
+}
